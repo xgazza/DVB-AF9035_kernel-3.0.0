@@ -647,6 +647,10 @@ static const struct af9035_rc_setup af9035_rc_setup_usbids[] = {
 		RC_MAP_DIGITALNOW_TINYTWIN },
 	{ (USB_VID_GTEK << 16) + USB_PID_TINYTWIN_3,
 		RC_MAP_DIGITALNOW_TINYTWIN },
+       { (USB_VID_AVERMEDIA << 16) + USB_PID_AVERMEDIA_A835,
+               RC_MAP_AVERMEDIA_RM_KS },
+       { (USB_VID_AVERMEDIA << 16) + USB_PID_AVERMEDIA_B835,
+               RC_MAP_AVERMEDIA_RM_KS },
 	{ }
 };
 
@@ -859,7 +863,7 @@ static int af9035_rc_query(struct dvb_usb_device *d)
 	if (ret)
 		goto error;
 	
-    if (buf[00] == 0x05 && buf[02] != 0xe7 ) {
+    if ( buf[02] != 0xe7 ) {
     	deb_info("%s: %02x %02x %02x %02x %02x \n", __func__,
 	      	buf[00], buf[01], buf[02], buf[03], buf[04], buf[05]);	
     	priv->rc_keycode = buf[00] << 8 | buf[02];
@@ -1127,7 +1131,7 @@ static struct usb_device_id af9035_usb_table[] = {
 
 MODULE_DEVICE_TABLE(usb, af9035_usb_table);
 
-#define AF9035_RC_INTERVAL 200
+#define AF9035_RC_INTERVAL 400
 
 static struct dvb_usb_device_properties af9035_properties[] = {
 	{
