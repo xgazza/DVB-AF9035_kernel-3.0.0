@@ -4,8 +4,6 @@
  * Copyright (C) 2008 Afatech
  * Copyright (C) 2009 Antti Palosaari <crope@iki.fi>
  *
- * Modified by Xgaz <xgazza@inwind.it> (November 2011)
- *
  *    This program is free software; you can redistribute it and/or modify
  *    it under the terms of the GNU General Public License as published by
  *    the Free Software Foundation; either version 2 of the License, or
@@ -24,12 +22,11 @@
  * Thanks to TerraTec for a support received.
  */
 
-#include "dvb-usb-ids.h"
 #include "af9035.h"
 #include "af9033.h"
 #include "tua9001.h"
 #include "mxl5007t.h"
-#include "tuner_tda18218.h"
+#include "tda18218.h"
 
 static int dvb_usb_af9035_debug;
 module_param_named(debug, dvb_usb_af9035_debug, int, 0644);
@@ -835,14 +832,19 @@ error:
 	if (ret)
 		err("eeprom read failed:%d", ret);
 
-	if (le16_to_cpu(udev->descriptor.idVendor) == USB_VID_AVERMEDIA &&
-	    (le16_to_cpu(udev->descriptor.idProduct) == USB_PID_AVERMEDIA_A825 ||
-             le16_to_cpu(udev->descriptor.idProduct) == USB_PID_AVERMEDIA_A835 ||
-             le16_to_cpu(udev->descriptor.idProduct) == USB_PID_AVERMEDIA_B835)) {
-		deb_info("%s: AverMedia A825/A835/B835: overriding config\n", __func__);
-		/* set correct IF */
-		for (i = 0; i < af9035_properties[0].num_adapters; i++) {
-			af9035_af9033_config[i].if_freq = 4570000;
+	if (le16_to_cpu(udev->descriptor.idVendor) == USB_VID_AVERMEDIA) {
+		switch (le16_to_cpu(udev->descriptor.idProduct)) {
+		case USB_PID_AVERMEDIA_A825:
+		case USB_PID_AVERMEDIA_A835:
+		case USB_PID_AVERMEDIA_B835:
+			deb_info("%s: AverMedia A825/A835/B835: overriding config\n", __func__);
+			/* set correct IF */
+			for (i = 0; i < af9035_properties[0].num_adapters; i++) {
+				af9035_af9033_config[i].if_freq = 4570000;
+			}
+			break;
+		default:
+			break;
 		}
 	}
 
@@ -1103,7 +1105,7 @@ static int af9035_tuner_attach(struct dvb_usb_adapter *adap)
                            reg_top_gpiot2_o_pos, reg_top_gpiot2_o_len, 1);
                    }
 
-                   ret = dvb_attach(tuner_tda18218_attach, adap->fe, &adap->dev->i2c_adap,
+                   ret = dvb_attach(tda18218_attach, adap->fe, &adap->dev->i2c_adap,
                            &af9035_tda18218_config) == NULL ? -ENODEV : 0;
                    break;
 	default:
@@ -1115,18 +1117,41 @@ static int af9035_tuner_attach(struct dvb_usb_adapter *adap)
 	return ret;
 }
 
+enum af9035_usb_table_entry {
+	AFATECH_AF9035_1000,
+	AFATECH_AF9035_1001,
+	AFATECH_AF9035_1002,
+	AFATECH_AF9035_1003,
+	AFATECH_AF9035_9035,
+	TERRATEC_CINERGY_T_STICK,
+	TERRATEC_CINERGY_T_STICK_2,
+	AVERMEDIA_TWINSTAR,
+	AVERMEDIA_VOLAR_HD,
+	AVERMEDIA_VOLAR_HD_PRO,
+};
+
 static struct usb_device_id af9035_usb_table[] = {
-/*  0 */{USB_DEVICE(USB_VID_AFATECH,   USB_PID_AFATECH_AF9035_1000)},
-	{USB_DEVICE(USB_VID_AFATECH,   USB_PID_AFATECH_AF9035_1001)},
-	{USB_DEVICE(USB_VID_AFATECH,   USB_PID_AFATECH_AF9035_1002)},
-	{USB_DEVICE(USB_VID_AFATECH,   USB_PID_AFATECH_AF9035_1003)},
-	{USB_DEVICE(USB_VID_AFATECH,   USB_PID_AFATECH_AF9035_9035)},
-/*  5 */{USB_DEVICE(USB_VID_TERRATEC,  USB_PID_TERRATEC_CINERGY_T_STICK)},
-        {USB_DEVICE(USB_VID_TERRATEC,  USB_PID_TERRATEC_CINERGY_T_STICK_2)},
-/*  7 */{USB_DEVICE(USB_VID_AVERMEDIA, USB_PID_AVERMEDIA_A825)},
-/*  8 */{USB_DEVICE(USB_VID_AVERMEDIA, USB_PID_AVERMEDIA_A835)},
-        {USB_DEVICE(USB_VID_AVERMEDIA, USB_PID_AVERMEDIA_B835)},
-	{0},
+	[AFATECH_AF9035_1000] = {USB_DEVICE(USB_VID_AFATECH,
+				USB_PID_AFATECH_AF9035_1000)},
+	[AFATECH_AF9035_1001] = {USB_DEVICE(USB_VID_AFATECH,
+				USB_PID_AFATECH_AF9035_1001)},
+	[AFATECH_AF9035_1002] = {USB_DEVICE(USB_VID_AFATECH,
+				USB_PID_AFATECH_AF9035_1002)},
+	[AFATECH_AF9035_1003] = {USB_DEVICE(USB_VID_AFATECH,
+				USB_PID_AFATECH_AF9035_1003)},
+	[AFATECH_AF9035_9035] = {USB_DEVICE(USB_VID_AFATECH,
+				USB_PID_AFATECH_AF9035_9035)},
+	[TERRATEC_CINERGY_T_STICK] = {USB_DEVICE(USB_VID_TERRATEC,
+				USB_PID_TERRATEC_CINERGY_T_STICK)},
+	[TERRATEC_CINERGY_T_STICK_2] = {USB_DEVICE(USB_VID_TERRATEC,
+				USB_PID_TERRATEC_CINERGY_T_STICK_2)},
+	[AVERMEDIA_TWINSTAR] = {USB_DEVICE(USB_VID_AVERMEDIA,
+				USB_PID_AVERMEDIA_A825)},
+	[AVERMEDIA_VOLAR_HD] = {USB_DEVICE(USB_VID_AVERMEDIA,
+				USB_PID_AVERMEDIA_A835)},
+	[AVERMEDIA_VOLAR_HD_PRO] = {USB_DEVICE(USB_VID_AVERMEDIA,
+				USB_PID_AVERMEDIA_B835)},
+	{ },
 };
 
 MODULE_DEVICE_TABLE(usb, af9035_usb_table);
@@ -1189,29 +1214,23 @@ static struct dvb_usb_device_properties af9035_properties[] = {
 		.devices = {
 			{
 				.name = "Afatech AF9035 DVB-T USB2.0 stick",
-				.cold_ids = {&af9035_usb_table[0],
-					     &af9035_usb_table[1],
-					     &af9035_usb_table[2],
-					     &af9035_usb_table[3],
-					     &af9035_usb_table[4], NULL},
+				.cold_ids = {&af9035_usb_table[AFATECH_AF9035_1000],
+					     &af9035_usb_table[AFATECH_AF9035_1001],
+					     &af9035_usb_table[AFATECH_AF9035_1002],
+					     &af9035_usb_table[AFATECH_AF9035_1003],
+					     &af9035_usb_table[AFATECH_AF9035_9035], NULL},
 				.warm_ids = {NULL},
 			},
 			{
 				.name = "TerraTec Cinergy T Stick",
-				.cold_ids = {&af9035_usb_table[5],
-                                             &af9035_usb_table[6], NULL},
+				.cold_ids = {&af9035_usb_table[TERRATEC_CINERGY_T_STICK],
+					     &af9035_usb_table[TERRATEC_CINERGY_T_STICK_2], NULL},
 				.warm_ids = {NULL},
 			},
 			{
 				.name = "Avermedia TwinStar",
-				.cold_ids = {&af9035_usb_table[7], NULL},
-	 			.warm_ids = {NULL},
-                        },
-                        {
-                                .name = "Avermedia AverTV Volar HD & HD PRO (A835)",
-                                .cold_ids = {&af9035_usb_table[8],
-                                             &af9035_usb_table[9], NULL},
-                                .warm_ids = {NULL},
+				.cold_ids = {&af9035_usb_table[AVERMEDIA_TWINSTAR], NULL},
+				.warm_ids = {NULL},
 			},
 		}
 	},
