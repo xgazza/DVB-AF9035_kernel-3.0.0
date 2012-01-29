@@ -1105,7 +1105,7 @@ static int af9035_tuner_attach(struct dvb_usb_adapter *adap)
                            reg_top_gpiot2_o_pos, reg_top_gpiot2_o_len, 1);
                    }
 
-                   ret = dvb_attach(tda18218_attach, adap->fe, &adap->dev->i2c_adap,
+                   ret = dvb_attach(tuner_tda18218_attach, adap->fe, &adap->dev->i2c_adap,
                            &af9035_tda18218_config) == NULL ? -ENODEV : 0;
                    break;
 	default:
@@ -1232,9 +1232,16 @@ static struct dvb_usb_device_properties af9035_properties[] = {
 				.cold_ids = {&af9035_usb_table[AVERMEDIA_TWINSTAR], NULL},
 				.warm_ids = {NULL},
 			},
+			{
+				.name = "Avermedia AverTV Volar HD & HD PRO (A835)",
+				.cold_ids = {&af9035_usb_table[AVERMEDIA_VOLAR_HD],
+					     &af9035_usb_table[AVERMEDIA_VOLAR_HD_PRO], NULL},
+				.warm_ids = {NULL},
+			},
 		}
 	},
 };
+
 static int af9035_usb_probe(struct usb_interface *intf,
 			    const struct usb_device_id *id)
 {
